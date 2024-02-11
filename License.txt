@@ -1,3 +1,4 @@
+abcd
 All source code included with this distribution, unless declared otherwise, 
 is commercial GSC Game World proprietary code. 
 
