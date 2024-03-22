@@ -29,7 +29,7 @@ bool cfg_read(cfg_var* vals)
 
 bool cfg_write(cfg_var* vals)
 {
-    FILE* cfg_file = fopen("loadscreen.cfg", "wb");
+    FILE* cfg_file = fopen("../gamedata/config/ui/loadscreen.cfg", "wb");
     if (!cfg_file) {
         //I don't know how local error reporting works
         //so I'm just "printf"ing it just to have an error message
