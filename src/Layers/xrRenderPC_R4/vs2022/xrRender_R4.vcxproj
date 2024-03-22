@@ -345,6 +345,7 @@
     <ClInclude Include="..\..\xrRender\LightTrack.h" />
     <ClInclude Include="..\..\xrRender\Light_DB.h" />
     <ClInclude Include="..\..\xrRender\Light_Package.h" />
+    <ClInclude Include="..\..\xrRender\loadscreen_cfg.h" />
     <ClInclude Include="..\..\xrRender\ModelPool.h" />
     <ClInclude Include="..\..\xrRender\NvTriStrip.h" />
     <ClInclude Include="..\..\xrRender\NvTriStripObjects.h" />
@@ -528,6 +529,7 @@
     <ClCompile Include="..\..\xrRender\LightTrack.cpp" />
     <ClCompile Include="..\..\xrRender\Light_DB.cpp" />
     <ClCompile Include="..\..\xrRender\Light_Package.cpp" />
+    <ClCompile Include="..\..\xrRender\loadscreen_cfg.cpp" />
     <ClCompile Include="..\..\xrRender\ModelPool.cpp" />
     <ClCompile Include="..\..\xrRender\NvTriStrip.cpp" />
     <ClCompile Include="..\..\xrRender\NvTriStripObjects.cpp" />
