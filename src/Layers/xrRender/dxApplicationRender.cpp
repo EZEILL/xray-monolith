@@ -140,13 +140,13 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 	if (vars.has_cfg) {
 		bw = vars.bw;
 		bh = vars.bh;
+		//printf("vars.bw: %f vars.bh: %f\n", vars.bw, vars.bh);
+		//printf("bw: %f bh: %f\n", bw, bh);
 	}
 	else {
 		if (vars.write_once) {
 			vars.bw = bw;
 			vars.bh = bh;
-			//printf("vars.bw: %f vars.bh: %f\n", vars.bw, vars.bh);
-			//printf("bw: %f bh: %f\n", bw, bh);
 		}
 	}
 	//END NEW------------------------------//
@@ -188,11 +188,13 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		//	"vars.back_tex_size_y		%f\n"
 		//	"vars.back_size_x			%f\n"
 		//	"vars.back_size_y			%f\n"
+		//	"vars.offs					%f\n"
 		//	,
 		//	vars.back_tex_size_x,
 		//	vars.back_tex_size_y,
 		//	vars.back_size_x,
-		//	vars.back_size_y
+		//	vars.back_size_y,
+		//	vars.offs
 		//);
 
 	}
@@ -269,6 +271,7 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 	//NEW----------------------------------//
 	if (vars.has_cfg) {
 		v_cnt = vars.v_cnt;
+		//printf("v_cnt: %d vars.v_cnt: %d\n", v_cnt, vars.v_cnt);
 	}
 	else {
 		if (vars.write_once) {
@@ -371,6 +374,15 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 			back_size.set(ws_w* ws_k, vars.back_size_y3);
 			back_tex_coords.rb.set(	vars.back_tex_coords_rb_x,
 									vars.back_tex_coords_rb_y);
+			//printf(
+			//	"back_size.y: %f\n"
+			//	"back_tex_coords.rb.x: %f\n"
+			//	"back_tex_coords.rb.y: %f\n"
+			//	,
+			//	back_size.y,
+			//	back_tex_coords.rb.x,
+			//	back_tex_coords.rb.y
+			//);
 		}
 		else {
 			if (vars.write_once) {
@@ -407,6 +419,17 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 									vars.back_tex_coords_lt_y2);
 			back_tex_coords.rb.set(	vars.back_tex_coords_rb_x2,
 									vars.back_tex_coords_rb_y2);
+			//printf(
+			//	"back_tex_coords.lt.x: %f\n"
+			//	"back_tex_coords.lt.y: %f\n"
+			//	"back_tex_coords.rb.x: %f\n"
+			//	"back_tex_coords.rb.y: %f\n"
+			//	,
+			//	back_tex_coords.lt.x,
+			//	back_tex_coords.lt.y,
+			//	back_tex_coords.rb.x,
+			//	back_tex_coords.rb.y
+			//);
 		}
 		else {
 			if (vars.write_once) {
@@ -433,11 +456,7 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		draw_face(hLevelLogo_Add, back_coords, back_tex_coords, tsz);
 	}
 
-	if (vars.write_once && !vars.has_cfg) {
-		//printf("writing more than once?");
-		cfg_write(&vars);
-		vars.write_once = false;
-	}
+
 
 	// Draw title
 	VERIFY(owner.pFontSystem);
@@ -461,6 +480,19 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		Frect r;
 		r.lt.set(0, 173);
 
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			r.lt.set(vars.r_lt_x, vars.r_lt_y);
+		}
+		else {
+			if (vars.write_once) {
+				vars.r_lt_x = r.lt.x;
+				vars.r_lt_y = r.lt.y;
+				//printf("r.lt.x: %f r.lt.y: %f\n", r.lt.x, r.lt.y);
+			}
+		}
+		//END NEW------------------------------//
+
 		if (b_ws)
 			r.lt.x *= ws_k;
 		r.lt.add(back_offset);
@@ -468,6 +500,19 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		r.lt.x += offs;
 		r.lt.y += offs;
 		back_size.set(1024, 399);
+
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			back_size.set(vars.back_size_x4, vars.back_size_y4);
+		}
+		else {
+			if (vars.write_once) {
+				vars.back_size_x4 = back_size.x;
+				vars.back_size_y4 = back_size.y;
+				//printf("back_size.x: %f back_size.y: %f\n", back_size.x, back_size.y);
+			}
+		}
+		//END NEW------------------------------//
 
 		if (b_ws)
 			back_size.x *= ws_k; //ws 0.625
@@ -479,8 +524,39 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		logo_tex_coords.lt.set(0, 0);
 		logo_tex_coords.rb.set(1.0f, 0.77926f);
 
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			logo_tex_coords.lt.set(vars.logo_tex_coords_lt_x, vars.logo_tex_coords_lt_y);
+			logo_tex_coords.rb.set(vars.logo_tex_coords_rb_x, vars.logo_tex_coords_rb_y);
+		}
+		else {
+			if (vars.write_once) {
+				vars.logo_tex_coords_lt_x = logo_tex_coords.lt.x;
+				vars.logo_tex_coords_lt_y = logo_tex_coords.lt.y;
+				vars.logo_tex_coords_rb_x = logo_tex_coords.rb.x;
+				vars.logo_tex_coords_rb_y = logo_tex_coords.rb.y;
+
+				//cfg_write(&vars);
+				//vars.write_screenshot = false;
+			}
+		}
+		//it takes a few frames for the engine to load a
+		//level specific screenshot
+		if (vars.write_once && !vars.has_cfg) {
+			//printf("writing more than once?");
+			cfg_write(&vars);
+			vars.write_once = false;
+		}
+		//END NEW------------------------------//
+
 		draw_face(hLevelLogo, r, logo_tex_coords, Fvector2().set(1, 1));
 	}
+
+	//if (vars.write_once && !vars.has_cfg) {
+	//	//printf("writing more than once?");
+	//	cfg_write(&vars);
+	//	vars.write_once = false;
+	//}
 }
 
 void dxApplicationRender::draw_face(ref_shader& sh, Frect& coords, Frect& tex_coords, const Fvector2& tsz)

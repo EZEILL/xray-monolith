@@ -11,11 +11,11 @@ void parse_key_val(char* key, char* val, cfg_var* vals, int flt_pos);
 
 bool cfg_read(cfg_var* vals)
 {
-    FILE* cfg_file = fopen("../gamedata/config/ui/loadscreen.cfg", "rb");
+    FILE* cfg_file = fopen("../gamedata/configs/ui/loadscreen.cfg", "rb");
     if (!cfg_file) {
         return false;
     }
-    printf("read test\n");
+    //printf("read test\n");
     fseek(cfg_file, 0, SEEK_END);
     size_t file_size = ftell(cfg_file);
     fseek(cfg_file, 0, SEEK_SET);
@@ -29,7 +29,10 @@ bool cfg_read(cfg_var* vals)
 
 bool cfg_write(cfg_var* vals)
 {
-    FILE* cfg_file = fopen("../gamedata/config/ui/loadscreen.cfg", "wb");
+    FILE* cfg_file = fopen("../gamedata/configs/ui/loadscreen.cfg", "wb");
+    //TODO: add folder creation if /configs/ui/ doesn't exist
+
+
     if (!cfg_file) {
         //I don't know how local error reporting works
         //so I'm just "printf"ing it just to have an error message
@@ -37,7 +40,7 @@ bool cfg_write(cfg_var* vals)
         return false;
     }
 
-    char buffer[1280];
+    char buffer[1536];
     snprintf(buffer, sizeof(buffer),
     "#no clue what this is\n"
         "bw=%f\n"
@@ -80,6 +83,17 @@ bool cfg_write(cfg_var* vals)
         "back_tex_coords_lt_y2=%f\n"
         "back_tex_coords_rb_x2=%f\n"
         "back_tex_coords_rb_y2=%f\n"
+    "#level-specific screenshot position\n"
+        "r_lt_x=%f\n"
+        "r_lt_y=%f\n"
+    "#level-specific screenshot size\n"
+        "back_size_x4=%f\n"
+        "back_size_y4=%f\n"
+    "#logo text coords?\n"
+        "logo_tex_coords_lt_x=%f\n"
+        "logo_tex_coords_lt_y=%f\n"
+        "logo_tex_coords_rb_x=%f\n"
+        "logo_tex_coords_rb_y=%f\n"
 
         "\0",
         vals->bw,                   vals->bh,
@@ -99,7 +113,13 @@ bool cfg_write(cfg_var* vals)
         vals->back_tex_coords_rb_x, vals->back_tex_coords_rb_y,
 
         vals->back_tex_coords_lt_x2,vals->back_tex_coords_lt_y2,
-        vals->back_tex_coords_rb_x2,vals->back_tex_coords_rb_y2
+        vals->back_tex_coords_rb_x2,vals->back_tex_coords_rb_y2,
+
+        vals->r_lt_x,               vals->r_lt_y,
+        vals->back_size_x4,         vals->back_size_y4,
+
+        vals->logo_tex_coords_lt_x, vals->logo_tex_coords_lt_y,
+        vals->logo_tex_coords_rb_x, vals->logo_tex_coords_rb_y
     );
 
     fwrite(buffer, strlen(buffer), 1, cfg_file);
@@ -118,11 +138,18 @@ void parse_cfg(uint8_t* file_buff, cfg_var* vals, size_t size)
     while (i < size) {
         switch (file_buff[i])
         {
+        //case '<':
+        //{
+        //    while (file_buff[i] != '>')
+        //    {
+        //        i++;
+        //    }
+        //}
         case '\r': case '\n':
         {
             *ptr = '\0';
             if (keybuff[0] != '\0') {
-                printf("key: %s val: %s\n", keybuff, valbuff);
+                //printf("key: %s val: %s\n", keybuff, valbuff);
                 parse_key_val(keybuff, valbuff, vals, flt);
             }
 
@@ -182,7 +209,7 @@ int parse_int(char* val)
     if (is_neg) {
         val_int *= -1;
     }
-    printf("final val_int: %d\n", val_int);
+    //printf("final val_int: %d\n", val_int);
     return val_int;
 }
 
@@ -216,7 +243,7 @@ float parse_flt(char* val, int flt_pos)
         val_flt *= -1;
     }
 
-    printf("final val_flt: %f\n", val_flt);
+    //printf("final val_flt: %f\n", val_flt);
     return val_flt;
 }
 
@@ -224,107 +251,195 @@ void parse_key_val(char* key, char* val, cfg_var* vals, int flt_pos)
 {
     int val_int = 0;
     float val_flt = 0.0f;
-    //printf("flt_pos: %d\n", flt_pos);
-    if (val[1] == 'x' || val[1] == 'X') {
-        val_int = (int)strtoul(val, NULL, 16);
-        printf("clr hex val_int: 0x%08X\n", val_int);
-    }
-    else {
+    //if (val[1] == 'x' || val[1] == 'X') {
+    //    val_int = (int)strtoul(val, NULL, 16);
+    //    printf("clr hex val_int: 0x%08X\n", val_int);
+    //}
+    //else {
         if (flt_pos > -1) {
             val_flt = parse_flt(val, flt_pos);
         }
         else {
             val_int = parse_int(val);
         }
-    }
+    //}
 
-    //check key and assign appropriately
-    if (strcmp(key, "bw") == 0) {
-        vals->bw = val_flt;
-    }
-    if (strcmp(key, "bh") == 0) {
-        vals->bh = val_flt;
-    }
-    if (strcmp(key, "back_tex_size_x") == 0) {
-        vals->back_tex_size_x = val_flt;
-    }
-    if (strcmp(key, "back_tex_size_y") == 0) {
-        vals->back_tex_size_y = val_flt;
-    }
-    if (strcmp(key, "back_size_x") == 0) {
-        vals->back_size_x = val_flt;
-    }
-    if (strcmp(key, "back_size_y") == 0) {
-        vals->back_size_y = val_flt;
-    }
+    char* match_key[40] = {
+        "bw",
+        "bh",
+        "back_tex_size_x",
+        "back_tex_size_y",
+        "back_size_x",
+        "back_size_y",
+        "offs",
+        "back_tex_coords_lt_x",
+        "back_tex_coords_lt_y",
+        "back_coords_lt_x",
+        "back_coords_lt_y",
+        "v_cnt",
+        "r",
+        "g",
+        "b",
+        "back_tex_size_x2",
+        "back_tex_size_y2",
+        "back_size_x2",
+        "back_size_y2",
+        "back_size_x3",
+        "back_size_y3",
+        "back_tex_coords_rb_x",
+        "back_tex_coords_rb_y",
+        "back_tex_coords_lt_x2",
+        "back_tex_coords_lt_y2",
+        "back_tex_coords_rb_x2",
+        "back_tex_coords_rb_y2",
+        "r_lt_x",
+        "r_lt_y",
+        "back_size_x4",
+        "back_size_y4",
+        "logo_tex_coords_lt_x",
+        "logo_tex_coords_lt_y",
+        "logo_tex_coords_rb_x",
+        "logo_tex_coords_rb_y",
+    };
 
-    if (strcmp(key, "offs") == 0) {
-        vals->offs = val_flt;
-    }
+    void* match_val[40] = {
+        &vals->bw,
+        &vals->bh,
+        &vals->back_tex_size_x,
+        &vals->back_tex_size_y,
+        &vals->back_size_x,
+        &vals->back_size_y,
+        &vals->offs,
+        &vals->back_tex_coords_lt_x,
+        &vals->back_tex_coords_lt_y,
+        &vals->back_coords_lt_x,
+        &vals->back_coords_lt_y,
+        &vals->v_cnt,
+        &vals->r,
+        &vals->g,
+        &vals->b,
+        &vals->back_tex_size_x2,
+        &vals->back_tex_size_y2,
+        &vals->back_size_x2,
+        &vals->back_size_y2,
+        &vals->back_size_x3,
+        &vals->back_size_y3,
+        &vals->back_tex_coords_rb_x,
+        &vals->back_tex_coords_rb_y,
+        &vals->back_tex_coords_lt_x2,
+        &vals->back_tex_coords_lt_y2,
+        &vals->back_tex_coords_rb_x2,
+        &vals->back_tex_coords_rb_y2,
+        &vals->r_lt_x,
+        &vals->r_lt_y,
+        &vals->back_size_x4,
+        &vals->back_size_y4,
+        &vals->logo_tex_coords_lt_x,
+        &vals->logo_tex_coords_lt_y,
+        &vals->logo_tex_coords_rb_x,
+        &vals->logo_tex_coords_rb_y,
+    };
 
-    if (strcmp(key, "back_tex_coords_lt_x") == 0) {
-        vals->back_tex_coords_lt_x = val_flt;
+    if (flt_pos > -1) {
+        for (int i = 0; i < 40; i++)
+        {
+            //printf("%s : %s\n", key, match_key[i]);
+            if (strcmp(key, match_key[i]) == 0) {
+                //printf("%s : %s\n", key, match_key[i]);
+                *(float*)(match_val[i]) = val_flt;
+                //printf("match_key[i]: %s *(float*)(match_val[i]): %f\n", match_key[i], *(float*)(match_val[i]));
+                break;
+            }
+        }
     }
-    if (strcmp(key, "back_tex_coords_lt_y") == 0) {
-        vals->back_tex_coords_lt_y = val_flt;
-    }
-    if (strcmp(key, "back_coords_lt_x") == 0) {
-        vals->back_coords_lt_x = val_flt;
-    }
-    if (strcmp(key, "back_coords_lt_y") == 0) {
-        vals->back_coords_lt_y = val_flt;
-    }
-
-    if (strcmp(key, "v_cnt") == 0) {
+    else {
+        //*(unsigned int*)(match_val[11]) = val_int;
+        //printf("match_key[11]: %s match_val[11]: %f *(unsigned int*)(match_val[11]): %f\n", match_key[11], match_val[11], *(unsigned int*)(match_val[11]));
         vals->v_cnt = val_int;
+        //printf("key: %s vals->v_cnt: %d\n", key, vals->v_cnt);
     }
 
-    if (strcmp(key, "r") == 0) {
-        vals->r = val_flt;
-    }
-    if (strcmp(key, "g") == 0) {
-        vals->g = val_flt;
-    }
-    if (strcmp(key, "b") == 0) {
-        vals->b = val_flt;
-    }
 
-    if (strcmp(key, "back_tex_size_x2") == 0) {
-        vals->back_tex_size_x2 = val_flt;
-    }
-    if (strcmp(key, "back_tex_size_y2") == 0) {
-        vals->back_tex_size_y2 = val_flt;
-    }
-    if (strcmp(key, "back_size_x2") == 0) {
-        vals->back_size_x2 = val_flt;
-    }
-    if (strcmp(key, "back_size_y2") == 0) {
-        vals->back_size_y2 = val_flt;
-    }
-
-    if (strcmp(key, "back_tex_coords_rb_x") == 0) {
-        vals->back_tex_coords_rb_x = val_flt;
-    }
-    if (strcmp(key, "back_tex_coords_rb_y") == 0) {
-        vals->back_tex_coords_rb_y = val_flt;
-    }
-    if (strcmp(key, "back_size_x3") == 0) {
-        vals->back_size_x3 = val_flt;
-    }
-    if (strcmp(key, "back_size_y3") == 0) {
-        vals->back_size_y3 = val_flt;
-    }
-
-    if (strcmp(key, "back_tex_coords_lt_x2") == 0) {
-        vals->back_tex_coords_lt_x2 = val_flt;
-    }
-    if (strcmp(key, "back_tex_coords_lt_y2") == 0) {
-        vals->back_tex_coords_lt_y2 = val_flt;
-    }
-    if (strcmp(key, "back_tex_coords_rb_x2") == 0) {
-        vals->back_tex_coords_rb_x2 = val_flt;
-    }
-    if (strcmp(key, "back_tex_coords_rb_y2") == 0) {
-        vals->back_tex_coords_rb_y2 = val_flt;
-    }
+    ////check key and assign appropriately
+    //if (strcmp(key, "bw") == 0) {
+    //    vals->bw = val_flt;
+    //}
+    //if (strcmp(key, "bh") == 0) {
+    //    vals->bh = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_size_x") == 0) {
+    //    vals->back_tex_size_x = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_size_y") == 0) {
+    //    vals->back_tex_size_y = val_flt;
+    //}
+    //if (strcmp(key, "back_size_x") == 0) {
+    //    vals->back_size_x = val_flt;
+    //}
+    //if (strcmp(key, "back_size_y") == 0) {
+    //    vals->back_size_y = val_flt;
+    //}
+    //if (strcmp(key, "offs") == 0) {
+    //    vals->offs = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_lt_x") == 0) {
+    //    vals->back_tex_coords_lt_x = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_lt_y") == 0) {
+    //    vals->back_tex_coords_lt_y = val_flt;
+    //}
+    //if (strcmp(key, "back_coords_lt_x") == 0) {
+    //    vals->back_coords_lt_x = val_flt;
+    //}
+    //if (strcmp(key, "back_coords_lt_y") == 0) {
+    //    vals->back_coords_lt_y = val_flt;
+    //}
+    //if (strcmp(key, "v_cnt") == 0) {
+    //    vals->v_cnt = val_int;
+    //}
+    //if (strcmp(key, "r") == 0) {
+    //    vals->r = val_flt;
+    //}
+    //if (strcmp(key, "g") == 0) {
+    //    vals->g = val_flt;
+    //}
+    //if (strcmp(key, "b") == 0) {
+    //    vals->b = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_size_x2") == 0) {
+    //    vals->back_tex_size_x2 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_size_y2") == 0) {
+    //    vals->back_tex_size_y2 = val_flt;
+    //}
+    //if (strcmp(key, "back_size_x2") == 0) {
+    //    vals->back_size_x2 = val_flt;
+    //}
+    //if (strcmp(key, "back_size_y2") == 0) {
+    //    vals->back_size_y2 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_rb_x") == 0) {
+    //    vals->back_tex_coords_rb_x = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_rb_y") == 0) {
+    //    vals->back_tex_coords_rb_y = val_flt;
+    //}
+    //if (strcmp(key, "back_size_x3") == 0) {
+    //    vals->back_size_x3 = val_flt;
+    //}
+    //if (strcmp(key, "back_size_y3") == 0) {
+    //    vals->back_size_y3 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_lt_x2") == 0) {
+    //    vals->back_tex_coords_lt_x2 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_lt_y2") == 0) {
+    //    vals->back_tex_coords_lt_y2 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_rb_x2") == 0) {
+    //    vals->back_tex_coords_rb_x2 = val_flt;
+    //}
+    //if (strcmp(key, "back_tex_coords_rb_y2") == 0) {
+    //    vals->back_tex_coords_rb_y2 = val_flt;
+    //}
 }
