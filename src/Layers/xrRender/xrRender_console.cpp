@@ -259,8 +259,10 @@ Fvector ps_r2_drops_control = {.0f, 1.15f, .0f}; // r2-only
 int ps_r2_nightvision = 0;
 
 //--DSR-- HeatVision_start
-int ps_r2_heatvision = 0;
-float heat_vision_mode = 0.0f;
+int ps_r2_heatvision = 0;			// heatvision shader ON/OFF
+float heat_vision_mode = 0.0f;		// heatvision mode - rgb/greyscale
+int heat_vision_cooldown = 1;		// heatvision corpse cooling down ON/OFF
+float heat_vision_cooldown_time = 20000.f;	// heatvision corpse cooling down time (in ms)
 Fvector4 heat_vision_steps = { 0.45f, 0.65f, 0.76f, .0f };
 Fvector4 heat_vision_blurring = { 15.f, 4.f, 60.f, .0f };
 Fvector4 heat_vision_args_1 = { .0f, .0f, .0f, .0f };
@@ -306,9 +308,21 @@ float ps_particle_update_coeff = 1.f;
 
 /////////////////////////////////
 
+// Mark Switch
+int ps_markswitch_current = 0;
+int ps_markswitch_count = 0;
+Fvector4 ps_markswitch_color = { 0, 0, 0, 0 };
+
 // Screen Space Shaders Stuff
+int ps_ssfx_ssr_quality = 0; // Quality
+Fvector4 ps_ssfx_ssr = { 1.0f, 0.3f, 0.6f, 0.0f }; // Res, Blur, Temp, Noise
+Fvector4 ps_ssfx_ssr_2 = { 0.0f, 1.3f, 1.0f, 0.015f }; // Quality, Fade, Int, Wpn Int
+
+Fvector4 ps_ssfx_terrain_quality = { 6, 0, 0, 0 };
+Fvector4 ps_ssfx_terrain_offset = { 0, 0, 0, 0 };
+
 Fvector3 ps_ssfx_shadows = { 256, 1536, 0.0f };
-Fvector3 ps_ssfx_volumetric = { 0, 0.02f, 1.5f };
+Fvector4 ps_ssfx_volumetric = { 0, 1.0f, 3.0f, 8.0f };
 
 Fvector3 ps_ssfx_shadow_bias = { 0.4f, 0.03f, 0.0f };
 
@@ -1158,9 +1172,21 @@ void xrRender_initconsole()
 	CMD4(CCC_Vector4, "shader_param_7", &ps_dev_param_7, tw2_min, tw2_max);
 	CMD4(CCC_Vector4, "shader_param_8", &ps_dev_param_8, tw2_min, tw2_max);
 	
+	// Mark Switch
+	CMD4(CCC_Integer, "markswitch_current", &ps_markswitch_current, 0, 32);
+	CMD4(CCC_Integer, "markswitch_count", &ps_markswitch_count, 0, 32);
+	CMD4(CCC_Vector4, "markswitch_color", &ps_markswitch_color, Fvector4().set(0.0, 0.0, 0.0, 0.0), Fvector4().set(1.0, 1.0, 1.0, 1.0));
+	
 	// Screen Space Shaders
+	CMD4(CCC_Integer, "ssfx_ssr_quality", &ps_ssfx_ssr_quality, 0, 5);
+	CMD4(CCC_Vector4, "ssfx_ssr", &ps_ssfx_ssr, Fvector4().set(1, 0, 0, 0), Fvector4().set(2, 1, 1, 1));
+	CMD4(CCC_Vector4, "ssfx_ssr_2", &ps_ssfx_ssr_2, Fvector4().set(0, 0, 0, 0), Fvector4().set(2, 2, 2, 2));
+	
+	CMD4(CCC_Vector4, "ssfx_terrain_quality", &ps_ssfx_terrain_quality, Fvector4().set(0, 0, 0, 0), Fvector4().set(12, 0, 0, 0));
+	CMD4(CCC_Vector4, "ssfx_terrain_offset", &ps_ssfx_terrain_offset, Fvector4().set(-1, -1, -1, -1), Fvector4().set(1, 1, 1, 1));
+
 	CMD4(CCC_Vector3, "ssfx_shadows", &ps_ssfx_shadows, Fvector3().set(128, 1536, 0), Fvector3().set(1536, 4096, 0));
-	CMD4(CCC_Vector3, "ssfx_volumetric", &ps_ssfx_volumetric, Fvector3().set(0, 0, 1.0), Fvector3().set(1.0, 1.0, 5.0));
+	CMD4(CCC_Vector4, "ssfx_volumetric", &ps_ssfx_volumetric, Fvector4().set(0, 0, 1.0, 1.0), Fvector4().set(1.0, 5.0, 5.0, 16.0));
 
 	CMD4(CCC_Vector3, "ssfx_shadow_bias", &ps_ssfx_shadow_bias, Fvector3().set(0, 0, 0), Fvector3().set(1.0, 1.0, 1.0));
 
@@ -1202,6 +1228,8 @@ void xrRender_initconsole()
 	CMD4(CCC_Float, "ssfx_wpn_dof_2", &ps_ssfx_wpn_dof_2, 0, 1);
 
 	//--DSR-- HeatVision_start
+	CMD4(CCC_Integer, "heat_vision_cooldown",	&heat_vision_cooldown, 0, 1);
+	CMD4(CCC_Float, "heat_vision_cooldown_time", &heat_vision_cooldown_time, 0, 300000.f);
 	CMD2(CCC_Float,   "heat_vision_mode",		&heat_vision_mode);
 	CMD4(CCC_Vector4, "heat_vision_steps",		&heat_vision_steps, tw2_min, tw2_max);
 	CMD4(CCC_Vector4, "heat_vision_blurring",	&heat_vision_blurring, tw2_min, tw2_max);
