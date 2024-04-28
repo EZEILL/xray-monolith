@@ -48,7 +48,7 @@
 
 #include "ai_debug_variables.h"
 #include "../xrphysics/console_vars.h"
-
+#include <sstream>
 #include "..\xrCore\LocatorAPI.h"
 #ifdef DEBUG
 #	include "PHDebug.h"
@@ -112,6 +112,8 @@ float g_head_bob_factor = 1.00f;
 float streff;
 
 extern BOOL g_ai_die_in_anomaly; //Alundaio
+
+extern BOOL g_telekinetic_objects_include_corpses; // Tosox
 
 //demonized: new console vars
 extern BOOL firstPersonDeath;
@@ -505,6 +507,53 @@ public:
 		FS.update_path(fn, "$game_saves$", fn_);
 
 		auto pDemoRecord = xr_new<CDemoRecord>(fn, &pDemoRecords);
+		g_pGameLevel->Cameras().AddCamEffector(pDemoRecord);
+	}
+};
+
+class CCC_DemoRecordReturnCtrlInputs : public IConsole_Command
+{
+public:
+
+	CCC_DemoRecordReturnCtrlInputs(LPCSTR N) : IConsole_Command(N)
+	{
+	};
+
+	virtual void Execute(LPCSTR args)
+	{
+#ifndef	DEBUG
+		//if (GameID() != eGameIDSingle)
+		//{
+		//	Msg("For this game type Demo Record is disabled.");
+		//	return;
+		//};
+#endif
+		Console->Hide();
+		std::istringstream iss(args);
+		std::string arg1;
+		float boundary = 15.f; // default value
+
+		if (!(iss >> arg1)) {
+			Msg("not enough parameters. e.g. demo_record_return_ctrl_inputs [filename] [boundary]");
+			return;
+		}
+
+		// Try to parse an optional second argument
+		std::string arg2;
+		if (iss >> arg2) {
+			std::istringstream iss2(arg2);
+			float num;
+			if (iss2 >> num) {
+				boundary = num;
+			}
+		}
+		LPSTR fn_;
+		STRCONCAT(fn_, arg1.c_str(), ".xrdemo");
+		string_path fn;
+		FS.update_path(fn, "$game_saves$", fn_);
+		float life_time = 60 * 60 * 1000;
+		auto pDemoRecord = xr_new<CDemoRecord>(fn, &pDemoRecords, FALSE, life_time, TRUE);
+		pDemoRecord->SetCameraBoundary(boundary);
 		g_pGameLevel->Cameras().AddCamEffector(pDemoRecord);
 	}
 };
@@ -2224,6 +2273,7 @@ void CCC_RegisterCommands()
 	CMD1(CCC_DemoRecord, "demo_record");
 	CMD1(CCC_DemoRecordBlockedInput, "demo_record_blocked_input");
 	CMD1(CCC_DemoRecordStop, "demo_record_stop");
+	CMD1(CCC_DemoRecordReturnCtrlInputs, "demo_record_return_ctrl_inputs");
 	CMD1(CCC_DemoRecordSetPos, "demo_set_cam_position");
 	CMD1(CCC_DemoRecordSetDir, "demo_set_cam_direction");
 	//#endif // #ifndef MASTER_GOLD
@@ -2603,6 +2653,8 @@ void CCC_RegisterCommands()
 	CMD4(CCC_Integer, "ai_die_in_anomaly", &g_ai_die_in_anomaly, 0, 1); //Alundaio
 
 	CMD4(CCC_Integer, "pseudogiant_can_damage_objects_on_stomp", &pseudogiantCanDamageObjects, 0, 1);
+
+	CMD4(CCC_Integer, "telekinetic_objects_include_corpses", &g_telekinetic_objects_include_corpses, 0, 1); // Tosox
 
 	CMD4(CCC_Float, "ai_aim_predict_time", &g_aim_predict_time, 0.f, 10.f);
 
