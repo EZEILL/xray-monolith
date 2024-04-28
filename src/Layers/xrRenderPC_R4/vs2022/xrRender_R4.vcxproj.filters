@@ -383,6 +383,7 @@
     <ClInclude Include="..\R_Backend_LOD.h" />
     <ClInclude Include="..\SMAP_Allocator.h" />
     <ClInclude Include="..\stdafx.h" />
+    <ClInclude Include="..\..\xrRender\loadscreen_cfg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\xrEngine\ai_script_lua_debug.cpp" />
@@ -605,5 +606,6 @@
     <ClCompile Include="..\R_Backend_LOD.cpp" />
     <ClCompile Include="..\stdafx.cpp" />
     <ClCompile Include="..\xrRender_R4.cpp" />
+    <ClCompile Include="..\..\xrRender\loadscreen_cfg.cpp" />
   </ItemGroup>
 </Project>

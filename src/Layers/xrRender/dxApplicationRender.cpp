@@ -2,6 +2,7 @@
 
 #include "dxApplicationRender.h"
 #include "../../xrEngine/GameFont.h"
+#include "loadscreen_cfg.h"
 
 void draw_multiline_text(CGameFont* F, float fTargetWidth, LPCSTR pszText);
 
@@ -55,6 +56,7 @@ u32 calc_progress_color(u32, u32, int, int);
 extern bool use_reshade;
 extern void render_reshade_effects();
 
+cfg_var vars;
 void dxApplicationRender::load_draw_internal(CApplication& owner)
 {
 #if defined(USE_DX10) || defined(USE_DX11)
@@ -95,6 +97,62 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 
 	float bw = 1024.0f;
 	float bh = 768.0f;
+
+
+	//NEW----------------------------------//
+	if (vars.read_once) {
+		vars.has_cfg = cfg_read(&vars);
+		vars.read_once = false;
+		//printf(
+		//	"vars.bw					%f\n"
+		//	"vars.bh					%f\n"
+		//	"vars.back_tex_size_x		%f\n"
+		//	"vars.back_tex_size_y		%f\n"
+		//	"vars.back_size_x			%f\n"
+		//	"vars.back_size_y			%f\n"
+		//	"vars.offs					%f\n"
+		//	"vars.back_tex_coords_lt_x	%f\n"
+		//	"vars.back_tex_coords_lt_y	%f\n"
+		//	"vars.back_coords_lt_x		%f\n"
+		//	"vars.back_coords_lt_y		%f\n"
+		//	"vars.back_tex_size_x2		%f\n"
+		//	"vars.back_tex_size_y2		%f\n"
+		//	"vars.back_size_x2			%f\n"
+		//	"vars.back_size_y2			%f\n"
+		//	,
+		//	vars.bw,
+		//	vars.bh,
+		//	vars.back_tex_size_x,
+		//	vars.back_tex_size_y,
+		//	vars.back_size_x,
+		//	vars.back_size_y,
+		//	vars.offs,
+		//	vars.back_tex_coords_lt_x,
+		//	vars.back_tex_coords_lt_y,
+		//	vars.back_coords_lt_x,
+		//	vars.back_coords_lt_y,
+		//	vars.back_tex_size_x2,
+		//	vars.back_tex_size_y2,
+		//	vars.back_size_x2,
+		//	vars.back_size_y2
+		//	);
+	}
+	if (vars.has_cfg) {
+		bw = vars.bw;
+		bh = vars.bh;
+		//printf("vars.bw: %f vars.bh: %f\n", vars.bw, vars.bh);
+		//printf("bw: %f bh: %f\n", bw, bh);
+	}
+	else {
+		if (vars.write_once) {
+			vars.bw = bw;
+			vars.bh = bh;
+		}
+	}
+	//END NEW------------------------------//
+
+
+
 	Fvector2 k;
 	k.set(_w / bw, _h / bh);
 
@@ -108,22 +166,90 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 	static float offs = -0.5f;
 
 	Fvector2 back_offset;
+
 	if (b_ws)
 		back_offset.set(ws_w * ws_k, 0.0f); //ws_w == 171
 	else
 		back_offset.set(0.0f, 0.0f);
 
 	//progress bar
-
 	back_tex_size.set(506, 4);
 	back_size.set(506, 4);
+
+	//NEW----------------------------------//
+	if (vars.has_cfg) {
+		back_tex_size.set(vars.back_tex_size_x, vars.back_tex_size_y);
+		back_size.set(vars.back_size_x, vars.back_size_y);
+		offs = vars.offs;
+		//back_offset.set(vars.back_offset_x, vars.back_offset_y);
+
+		//printf(
+		//	"vars.back_tex_size_x		%f\n"
+		//	"vars.back_tex_size_y		%f\n"
+		//	"vars.back_size_x			%f\n"
+		//	"vars.back_size_y			%f\n"
+		//	"vars.offs					%f\n"
+		//	,
+		//	vars.back_tex_size_x,
+		//	vars.back_tex_size_y,
+		//	vars.back_size_x,
+		//	vars.back_size_y,
+		//	vars.offs
+		//);
+
+	}
+	else {
+		if (vars.write_once) {
+			vars.back_tex_size_x = back_tex_size.x;
+			vars.back_tex_size_y = back_tex_size.y;
+			vars.back_size_x = back_size.x;
+			vars.back_size_y = back_size.y;
+			vars.offs = offs;
+			//vars.back_offset_x = back_offset.x;
+			//vars.back_offset_y = back_offset.y;
+
+			//printf("offs: %f vars.offs: %f\n", offs, vars.offs);
+		}
+	}
+	//END NEW------------------------------//
+
+
+
 	if (b_ws)
 		back_size.x *= ws_k; //ws
 
 	back_tex_coords.lt.set(0, 772);
+
+	//NEW----------------------------------//
+	if (vars.has_cfg) {
+		back_tex_coords.lt.set(vars.back_tex_coords_lt_x,
+			vars.back_tex_coords_lt_y);
+	}
+	else {
+		if (vars.write_once) {
+			vars.back_tex_coords_lt_x = back_tex_coords.lt.x;
+			vars.back_tex_coords_lt_y = back_tex_coords.lt.y;
+		}
+	}
+	//END NEW------------------------------//
+
 	back_tex_coords.rb.add(back_tex_coords.lt, back_tex_size);
 
 	back_coords.lt.set(260, 599);
+
+	//NEW----------------------------------//
+	if (vars.has_cfg) {
+		back_coords.lt.set(vars.back_coords_lt_x,
+			vars.back_coords_lt_y);
+	}
+	else {
+		if (vars.write_once) {
+			vars.back_coords_lt_x = back_coords.lt.x;
+			vars.back_coords_lt_y = back_coords.lt.y;
+		}
+	}
+	//END NEW------------------------------//
+
 	if (b_ws)
 		back_coords.lt.x *= ws_k;
 	back_coords.lt.add(back_offset);
@@ -141,6 +267,19 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 	u32 C = 0xffffffff;
 	FVF::TL* pv = NULL;
 	u32 v_cnt = 40;
+
+	//NEW----------------------------------//
+	if (vars.has_cfg) {
+		v_cnt = vars.v_cnt;
+		//printf("v_cnt: %d vars.v_cnt: %d\n", v_cnt, vars.v_cnt);
+	}
+	else {
+		if (vars.write_once) {
+			vars.v_cnt = v_cnt;
+		}
+	}
+	//END NEW------------------------------//
+
 	pv = (FVF::TL*)RCache.Vertex.Lock(2 * (v_cnt + 1), ll_hGeom2.stride(), Offset);
 	FVF::TL* _pv = pv;
 	float pos_delta = back_coords.width() / v_cnt;
@@ -150,11 +289,12 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 	for (u32 idx = 0; idx < v_cnt + 1; ++idx)
 	{
 		clr = calc_progress_color(idx, v_cnt, owner.load_stage, owner.max_load_stage);
+
 		pv->set(back_coords.lt.x + pos_delta * idx + offs, back_coords.rb.y + offs, 0 + EPS_S, 1, clr,
-		        back_tex_coords.lt.x + tc_delta * idx, back_tex_coords.rb.y);
+			back_tex_coords.lt.x + tc_delta * idx, back_tex_coords.rb.y);
 		pv++;
 		pv->set(back_coords.lt.x + pos_delta * idx + offs, back_coords.lt.y + offs, 0 + EPS_S, 1, clr,
-		        back_tex_coords.lt.x + tc_delta * idx, back_tex_coords.lt.y);
+			back_tex_coords.lt.x + tc_delta * idx, back_tex_coords.lt.y);
 		pv++;
 	}
 	VERIFY(u32(pv-_pv)==2*(v_cnt+1));
@@ -168,6 +308,37 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 
 	back_tex_size.set(1024, 768);
 	back_size.set(1024, 768);
+
+	//NEW----------------------------------//
+	if (vars.has_cfg) {
+		back_tex_size.set(	vars.back_tex_size_x2,
+							vars.back_tex_size_y2);
+		back_size.set(	vars.back_size_x2,
+						vars.back_size_y2);
+		//printf(
+		//	"vars.back_tex_size_x2		%f\n"
+		//	"vars.back_tex_size_y2		%f\n"
+		//	"vars.back_size_x2			%f\n"
+		//	"vars.back_size_y2			%f\n"
+		//	,
+		//	vars.back_tex_size_x2,
+		//	vars.back_tex_size_y2,
+		//	vars.back_size_x2,
+		//	vars.back_size_y2
+		//);
+	}
+	else {
+		if (vars.write_once) {
+			vars.back_tex_size_x2 = back_tex_size.x;
+			vars.back_tex_size_y2 = back_tex_size.y;
+			vars.back_size_x2 = back_size.x;
+			vars.back_size_y2 = back_size.y;
+			//printf("back_size.x: %f back_size.y: %f\n", back_size.x, back_size.y);
+			//printf("back_size_x2.x: %f back_size_x2.y: %f\n", vars.back_size_x2, vars.back_size_y2);
+		}
+	}
+	//END NEW------------------------------//
+
 	if (b_ws)
 		back_size.x *= ws_k; //ws
 
@@ -197,6 +368,32 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 			back_tex_coords.lt.set(0, 0);
 			back_tex_coords.rb.set(128, 768);
 		}
+
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			back_size.set(ws_w* ws_k, vars.back_size_y3);
+			back_tex_coords.rb.set(	vars.back_tex_coords_rb_x,
+									vars.back_tex_coords_rb_y);
+			//printf(
+			//	"back_size.y: %f\n"
+			//	"back_tex_coords.rb.x: %f\n"
+			//	"back_tex_coords.rb.y: %f\n"
+			//	,
+			//	back_size.y,
+			//	back_tex_coords.rb.x,
+			//	back_tex_coords.rb.y
+			//);
+		}
+		else {
+			if (vars.write_once) {
+				vars.back_tex_coords_rb_x = back_tex_coords.rb.x;
+				vars.back_tex_coords_rb_y = back_tex_coords.rb.y;
+				vars.back_size_y3 = back_size.y;
+			}
+		}
+		//END NEW------------------------------//
+
+
 		back_coords.lt.set(offs, offs);
 		back_coords.rb.add(back_coords.lt, back_size);
 		back_coords.lt.mul(k);
@@ -216,6 +413,41 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 			back_tex_coords.rb.set(256, 768);
 		}
 
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			back_tex_coords.lt.set(	vars.back_tex_coords_lt_x2,
+									vars.back_tex_coords_lt_y2);
+			back_tex_coords.rb.set(	vars.back_tex_coords_rb_x2,
+									vars.back_tex_coords_rb_y2);
+			//printf(
+			//	"back_tex_coords.lt.x: %f\n"
+			//	"back_tex_coords.lt.y: %f\n"
+			//	"back_tex_coords.rb.x: %f\n"
+			//	"back_tex_coords.rb.y: %f\n"
+			//	,
+			//	back_tex_coords.lt.x,
+			//	back_tex_coords.lt.y,
+			//	back_tex_coords.rb.x,
+			//	back_tex_coords.rb.y
+			//);
+		}
+		else {
+			if (vars.write_once) {
+				vars.back_tex_coords_lt_x2 = back_tex_coords.lt.x;
+				vars.back_tex_coords_lt_y2 = back_tex_coords.lt.y;
+				vars.back_tex_coords_rb_x2 = back_tex_coords.rb.x;
+				vars.back_tex_coords_rb_y2 = back_tex_coords.rb.y;
+				//printf(
+				//	"back_tex_coords.lt.x: %f\n"
+				//	"back_tex_coords.lt.y: %f\n"
+				//	,
+				//	back_tex_coords.lt.x,
+				//	back_tex_coords.lt.y
+				//);
+			}
+		}
+		//END NEW------------------------------//
+
 		back_coords.lt.set(1024.0f - back_size.x + offs, offs);
 		back_coords.rb.add(back_coords.lt, back_size);
 		back_coords.lt.mul(k);
@@ -223,6 +455,7 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 
 		draw_face(hLevelLogo_Add, back_coords, back_tex_coords, tsz);
 	}
+
 
 
 	// Draw title
@@ -247,6 +480,19 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		Frect r;
 		r.lt.set(0, 173);
 
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			r.lt.set(vars.r_lt_x, vars.r_lt_y);
+		}
+		else {
+			if (vars.write_once) {
+				vars.r_lt_x = r.lt.x;
+				vars.r_lt_y = r.lt.y;
+				//printf("r.lt.x: %f r.lt.y: %f\n", r.lt.x, r.lt.y);
+			}
+		}
+		//END NEW------------------------------//
+
 		if (b_ws)
 			r.lt.x *= ws_k;
 		r.lt.add(back_offset);
@@ -254,6 +500,19 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		r.lt.x += offs;
 		r.lt.y += offs;
 		back_size.set(1024, 399);
+
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			back_size.set(vars.back_size_x4, vars.back_size_y4);
+		}
+		else {
+			if (vars.write_once) {
+				vars.back_size_x4 = back_size.x;
+				vars.back_size_y4 = back_size.y;
+				//printf("back_size.x: %f back_size.y: %f\n", back_size.x, back_size.y);
+			}
+		}
+		//END NEW------------------------------//
 
 		if (b_ws)
 			back_size.x *= ws_k; //ws 0.625
@@ -265,8 +524,39 @@ void dxApplicationRender::load_draw_internal(CApplication& owner)
 		logo_tex_coords.lt.set(0, 0);
 		logo_tex_coords.rb.set(1.0f, 0.77926f);
 
+		//NEW----------------------------------//
+		if (vars.has_cfg) {
+			logo_tex_coords.lt.set(vars.logo_tex_coords_lt_x, vars.logo_tex_coords_lt_y);
+			logo_tex_coords.rb.set(vars.logo_tex_coords_rb_x, vars.logo_tex_coords_rb_y);
+		}
+		else {
+			if (vars.write_once) {
+				vars.logo_tex_coords_lt_x = logo_tex_coords.lt.x;
+				vars.logo_tex_coords_lt_y = logo_tex_coords.lt.y;
+				vars.logo_tex_coords_rb_x = logo_tex_coords.rb.x;
+				vars.logo_tex_coords_rb_y = logo_tex_coords.rb.y;
+
+				//cfg_write(&vars);
+				//vars.write_screenshot = false;
+			}
+		}
+		//it takes a few frames for the engine to load a
+		//level specific screenshot
+		if (vars.write_once && !vars.has_cfg) {
+			//printf("writing more than once?");
+			cfg_write(&vars);
+			vars.write_once = false;
+		}
+		//END NEW------------------------------//
+
 		draw_face(hLevelLogo, r, logo_tex_coords, Fvector2().set(1, 1));
 	}
+
+	//if (vars.write_once && !vars.has_cfg) {
+	//	//printf("writing more than once?");
+	//	cfg_write(&vars);
+	//	vars.write_once = false;
+	//}
 }
 
 void dxApplicationRender::draw_face(ref_shader& sh, Frect& coords, Frect& tex_coords, const Fvector2& tsz)
@@ -301,7 +591,25 @@ u32 calc_progress_color(u32 idx, u32 total, int stage, int max_stage)
 	float kk = (float(stage + 1) / float(max_stage)) * (total);
 	float f = 1 / (exp((float(idx) - kk) * 0.5f) + 1.0f);
 
-	return color_argb_f(f, 1.0f, 1.0f, 1.0f);
+	float r = 1.0f;
+	float g = 1.0f;
+	float b = 1.0f;
+
+	if (vars.has_cfg) {
+		r = vars.r;
+		g = vars.g;
+		b = vars.b;
+		//printf("r: %f g: %f b: %f\n", r,g,b);
+	}
+	else {
+		if (vars.write_once) {
+			vars.r = r;
+			vars.g = g;
+			vars.b = b;
+		}
+	}
+
+	return color_argb_f(f, r, g, b); 
 }
 
 #define IsSpace(ch)       ((ch) == ' ' || (ch) == '\t' || (ch) == '\r' || (ch) == '\n' || (ch) == ',' || (ch) == '.' || (ch) == ':' || (ch) == '!')
